@@ -24,13 +24,13 @@ module.exports = {
     test.done();
   },
 
-  "signer appends signature to the root node by default": function(test) {
+  "signer appends signature to the root node by default": async function(test) {
     var xml = "<root><name>xml-crypto</name><repository>github</repository></root>"
     var sig = new SignedXml()
 
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
     sig.addReference("//*[local-name(.)='name']")
-    sig.computeSignature(xml);
+    await sig.computeSignature(xml);
 
     var doc = new dom().parseFromString(sig.getSignedXml())
 
@@ -38,14 +38,14 @@ module.exports = {
     test.done();
   },
 
-  "signer appends signature to a reference node": function(test) {
+  "signer appends signature to a reference node": async function(test) {
     var xml = "<root><name>xml-crypto</name><repository>github</repository></root>"
     var sig = new SignedXml()
 
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
     sig.addReference("//*[local-name(.)='repository']")
 
-    sig.computeSignature(xml, {
+    await sig.computeSignature(xml, {
       location: {
         reference: '/root/name',
         action: 'append'
@@ -59,14 +59,14 @@ module.exports = {
     test.done();
   },
 
-  "signer prepends signature to a reference node": function(test) {
+  "signer prepends signature to a reference node": async function(test) {
     var xml = "<root><name>xml-crypto</name><repository>github</repository></root>"
     var sig = new SignedXml()
 
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
     sig.addReference("//*[local-name(.)='repository']")
 
-    sig.computeSignature(xml, {
+    await sig.computeSignature(xml, {
       location: {
         reference: '/root/name',
         action: 'prepend'
@@ -80,14 +80,14 @@ module.exports = {
     test.done();
   },
 
-  "signer inserts signature before a reference node": function(test) {
+  "signer inserts signature before a reference node": async function(test) {
     var xml = "<root><name>xml-crypto</name><repository>github</repository></root>"
     var sig = new SignedXml()
 
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
     sig.addReference("//*[local-name(.)='repository']")
 
-    sig.computeSignature(xml, {
+    await sig.computeSignature(xml, {
       location: {
         reference: '/root/name',
         action: 'before'
@@ -101,14 +101,14 @@ module.exports = {
     test.done();
   },
 
-  "signer inserts signature after a reference node": function(test) {
+  "signer inserts signature after a reference node": async function(test) {
     var xml = "<root><name>xml-crypto</name><repository>github</repository></root>"
     var sig = new SignedXml()
 
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
     sig.addReference("//*[local-name(.)='repository']")
 
-    sig.computeSignature(xml, {
+    await sig.computeSignature(xml, {
       location: {
         reference: '/root/name',
         action: 'after'
@@ -122,7 +122,7 @@ module.exports = {
     test.done();
   },
 
-  "signer creates signature with correct structure": function(test) {
+  "signer creates signature with correct structure": async function(test) {
 
     function DummyKeyInfo() {
       this.getKeyInfo = function(key) {
@@ -143,8 +143,8 @@ module.exports = {
 
     function DummySignatureAlgorithm() {
 
-      this.getSignature = function(xml, signingKey) {
-        return "dummy signature"
+      this.getSignature = function(xml, signingKey, cb) {
+        return cb(null, "dummy signature");
       }
 
       this.getAlgorithmName = function() {
@@ -190,7 +190,7 @@ module.exports = {
     sig.addReference("//*[local-name(.)='y']", ["http://DummyTransformation"], "http://dummyDigest")
     sig.addReference("//*[local-name(.)='w']", ["http://DummyTransformation"], "http://dummyDigest")
 
-    sig.computeSignature(xml)
+    await sig.computeSignature(xml)
     var signature = sig.getSignatureXml()
     var expected = "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">"+
                   "<SignedInfo>"+
@@ -273,7 +273,7 @@ module.exports = {
     test.done();
   },
 
-  "signer creates signature with correct structure (with prefix)": function(test) {
+  "signer creates signature with correct structure (with prefix)": async function(test) {
     var prefix = 'ds';
 
     function DummyKeyInfo() {
@@ -295,8 +295,8 @@ module.exports = {
 
     function DummySignatureAlgorithm() {
 
-      this.getSignature = function(xml, signingKey) {
-        return "dummy signature"
+      this.getSignature = function(xml, signingKey, cb) {
+        return cb(null, "dummy signature");
       }
 
       this.getAlgorithmName = function() {
@@ -342,7 +342,7 @@ module.exports = {
     sig.addReference("//*[local-name(.)='y']", ["http://DummyTransformation"], "http://dummyDigest")
     sig.addReference("//*[local-name(.)='w']", ["http://DummyTransformation"], "http://dummyDigest")
 
-    sig.computeSignature(xml, { prefix: prefix });
+    await sig.computeSignature(xml, { prefix: prefix });
     var signature = sig.getSignatureXml()
 
     var expected = "<ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">"+
@@ -425,7 +425,7 @@ module.exports = {
     test.done();
   },
 
-  "signer creates correct signature values": function(test) {
+  "signer creates correct signature values": async function(test) {
 
     var xml = "<root><x xmlns=\"ns\" Id=\"_0\"></x><y attr=\"value\" Id=\"_1\"></y><z><w Id=\"_2\"></w></z></root>"
     var sig = new SignedXml()
@@ -436,7 +436,7 @@ module.exports = {
     sig.addReference("//*[local-name(.)='y']")
     sig.addReference("//*[local-name(.)='w']")
 
-    sig.computeSignature(xml)
+    await sig.computeSignature(xml)
     var signedXml = sig.getSignedXml()
     var expected =  "<root><x xmlns=\"ns\" Id=\"_0\"/><y attr=\"value\" Id=\"_1\"/><z><w Id=\"_2\"/></z>" +
                     "<Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\">" +
@@ -480,31 +480,31 @@ module.exports = {
     test.done()
   },
 
-  "verify valid signature": function(test) {
-    passValidSignature(test, "./test/static/valid_signature.xml")
-    passValidSignature(test, "./test/static/valid_signature_with_lowercase_id_attribute.xml")
-    passValidSignature(test, "./test/static/valid_signature wsu.xml", "wssecurity")
-    passValidSignature(test, "./test/static/valid_signature_with_reference_keyInfo.xml")
-    passValidSignature(test, "./test/static/valid_signature_with_whitespace_in_digestvalue.xml")
-    passValidSignature(test, "./test/static/valid_signature_utf8.xml")
-    passValidSignature(test, "./test/static/valid_signature_with_unused_prefixes.xml")
+  "verify valid signature": async function(test) {
+    await passValidSignature(test, "./test/static/valid_signature.xml")
+    await passValidSignature(test, "./test/static/valid_signature_with_lowercase_id_attribute.xml")
+    await passValidSignature(test, "./test/static/valid_signature wsu.xml", "wssecurity")
+    await passValidSignature(test, "./test/static/valid_signature_with_reference_keyInfo.xml")
+    await passValidSignature(test, "./test/static/valid_signature_with_whitespace_in_digestvalue.xml")
+    await passValidSignature(test, "./test/static/valid_signature_utf8.xml")
+    await passValidSignature(test, "./test/static/valid_signature_with_unused_prefixes.xml")
     test.done()
   },
 
-  "fail invalid signature": function(test) {
-    failInvalidSignature(test, "./test/static/invalid_signature - signature value.xml")
-    failInvalidSignature(test, "./test/static/invalid_signature - hash.xml")
-    failInvalidSignature(test, "./test/static/invalid_signature - non existing reference.xml")
-    failInvalidSignature(test, "./test/static/invalid_signature - changed content.xml")
-    failInvalidSignature(test, "./test/static/invalid_signature - wsu - invalid signature value.xml", "wssecurity")
-    failInvalidSignature(test, "./test/static/invalid_signature - wsu - hash.xml", "wssecurity")
-    failInvalidSignature(test, "./test/static/invalid_signature - wsu - non existing reference.xml", "wssecurity")
-    failInvalidSignature(test, "./test/static/invalid_signature - wsu - changed content.xml", "wssecurity")
+  "fail invalid signature": async function(test) {
+    await failInvalidSignature(test, "./test/static/invalid_signature - signature value.xml")
+    await failInvalidSignature(test, "./test/static/invalid_signature - hash.xml")
+    await failInvalidSignature(test, "./test/static/invalid_signature - non existing reference.xml")
+    await failInvalidSignature(test, "./test/static/invalid_signature - changed content.xml")
+    await failInvalidSignature(test, "./test/static/invalid_signature - wsu - invalid signature value.xml", "wssecurity")
+    await failInvalidSignature(test, "./test/static/invalid_signature - wsu - hash.xml", "wssecurity")
+    await failInvalidSignature(test, "./test/static/invalid_signature - wsu - non existing reference.xml", "wssecurity")
+    await failInvalidSignature(test, "./test/static/invalid_signature - wsu - changed content.xml", "wssecurity")
 
     test.done()
   },
 
-  "allow empty reference uri when signing": function(test) {
+  "allow empty reference uri when signing": async function(test) {
     var xml = "<root><x /></root>"
     var sig = new SignedXml()
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
@@ -512,7 +512,7 @@ module.exports = {
 
     sig.addReference("//*[local-name(.)='root']", ["http://www.w3.org/2000/09/xmldsig#enveloped-signature"], "http://www.w3.org/2000/09/xmldsig#sha1", "", "", "", true)
 
-    sig.computeSignature(xml)
+    await sig.computeSignature(xml)
     var signedXml = sig.getSignedXml()
     var doc = new dom().parseFromString(signedXml)
     var URI = select("//*[local-name(.)='Reference']/@URI", doc)[0]
@@ -520,7 +520,7 @@ module.exports = {
     test.done()
   },
 
-  "signer appends signature to a non-existing reference node": function(test) {
+  "signer appends signature to a non-existing reference node": async function(test) {
     var xml = "<root><name>xml-crypto</name><repository>github</repository></root>";
     var sig = new SignedXml();
 
@@ -528,7 +528,7 @@ module.exports = {
     sig.addReference("//*[local-name(.)='repository']");
 
     try {
-        sig.computeSignature(xml, {
+        await sig.computeSignature(xml, {
           location: {
             reference: '/root/foobar',
             action: 'append'
@@ -542,7 +542,7 @@ module.exports = {
     test.done();
   },
 
-  "signer adds existing prefixes": function(test) {
+  "signer adds existing prefixes": async function(test) {
     function AssertionKeyInfo(assertionId) {
       this.getKeyInfo = function(key, prefix) {
         return '<wsse:SecurityTokenReference wsse11:TokenType="http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1" wsu:Id="0" ' +
@@ -568,7 +568,7 @@ module.exports = {
       "_81d5fba5c807be9e9cf60c58566349b1"
     );
     sig.signingKey = fs.readFileSync("./test/static/client.pem");
-    sig.computeSignature(xml, {
+    await sig.computeSignature(xml, {
       prefix: "ds",
       location: {
         reference: "//Assertion",
@@ -587,9 +587,9 @@ module.exports = {
 
 }
 
-function passValidSignature(test, file, mode) {
+async function passValidSignature(test, file, mode) {
   var xml = fs.readFileSync(file).toString()
-  var res = verifySignature(xml, mode)
+  var res = await verifySignature(xml, mode)
   test.equal(true, res, "expected signature to be valid, but it was reported invalid")
 }
 
@@ -609,7 +609,7 @@ function passLoadSignature(test, file, toString) {
     "wrong signature method")
 
   test.equal("PI2xGt3XrVcxYZ34Kw7nFdq75c7Mmo7J0q7yeDhBprHuJal/KV9KyKG+Zy3bmQIxNwkPh0KMP5r1YMTKlyifwbWK0JitRCSa0Fa6z6+TgJi193yiR5S1MQ+esoQT0RzyIOBl9/GuJmXx/1rXnqrTxmL7UxtqKuM29/eHwF0QDUI=",
-    sig.signatureValue,
+    sig.signatureValue.toString('base64'),
     "wrong signature value")
 
   var keyInfo = select("//*[local-name(.)='KeyInfo']/*[local-name(.)='dummyKey']", sig.keyInfo[0])[0];
@@ -631,13 +631,13 @@ function passLoadSignature(test, file, toString) {
   }
 }
 
-function failInvalidSignature(test, file, mode) {
+async function failInvalidSignature(test, file, mode) {
   var xml = fs.readFileSync(file).toString()
-  var res = verifySignature(xml, mode)
+  var res = await verifySignature(xml, mode)
   test.equal(false, res, "expected signature to be invalid, but it was reported valid")
 }
 
-function verifySignature(xml, mode) {
+async function verifySignature(xml, mode) {
 
   var doc = new dom().parseFromString(xml)
   var node = select("//*[local-name(.)='Signature' and namespace-uri(.)='http://www.w3.org/2000/09/xmldsig#']", doc)[0]
@@ -645,17 +645,17 @@ function verifySignature(xml, mode) {
   var sig = new SignedXml(mode)
   sig.keyInfoProvider = new FileKeyInfo("./test/static/client_public.pem")
   sig.loadSignature(node)
-  var res = sig.checkSignature(xml)
+  var res = await sig.checkSignature(xml)
   console.log(sig.validationErrors)
   return res;
 }
 
-function verifyDoesNotDuplicateIdAttributes(test, mode, prefix) {
+async function verifyDoesNotDuplicateIdAttributes(test, mode, prefix) {
   var xml = "<x xmlns:wsu='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd' " + prefix + "Id='_1'></x>"
   var sig = new SignedXml(mode)
   sig.signingKey = fs.readFileSync("./test/static/client.pem")
   sig.addReference("//*[local-name(.)='x']")
-  sig.computeSignature(xml)
+  await sig.computeSignature(xml)
   var signedxml = sig.getOriginalXmlWithIds()
   var doc = new dom().parseFromString(signedxml)
   var attrs = select("//@*", doc)
@@ -663,7 +663,7 @@ function verifyDoesNotDuplicateIdAttributes(test, mode, prefix) {
 
 }
 
-function verifyAddsId(test, mode, nsMode) {
+async function verifyAddsId(test, mode, nsMode) {
   var xml = "<x xmlns=\"ns\"></x><y attr=\"value\"></y><z><w></w></z>"
   var sig = new SignedXml(mode)
   sig.signingKey = fs.readFileSync("./test/static/client.pem")
@@ -672,7 +672,7 @@ function verifyAddsId(test, mode, nsMode) {
   sig.addReference("//*[local-name(.)='y']")
   sig.addReference("//*[local-name(.)='w']")
 
-  sig.computeSignature(xml)
+  await sig.computeSignature(xml)
   var signedxml = sig.getOriginalXmlWithIds()
   var doc = new dom().parseFromString(signedxml)
 
@@ -687,7 +687,7 @@ function verifyAddsId(test, mode, nsMode) {
 
 }
 
-function verifyAddsAttrs(test) {
+async function verifyAddsAttrs(test) {
   var xml = "<root xmlns=\"ns\"><name>xml-crypto</name><repository>github</repository></root>"
   var sig = new SignedXml()
   var attrs = {
@@ -700,7 +700,7 @@ function verifyAddsAttrs(test) {
 
   sig.addReference("//*[local-name(.)='name']")
 
-  sig.computeSignature(xml, {
+  await sig.computeSignature(xml, {
     attrs: attrs
   })
 

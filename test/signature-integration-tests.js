@@ -33,7 +33,7 @@ module.exports = {
 
 
 
-  "empty URI reference should consider the whole document": function(test) {
+  "empty URI reference should consider the whole document": async function(test) {
     var xml = "<library>" +
                 "<book>" +
                   "<name>Harry Potter</name>" +
@@ -58,12 +58,12 @@ module.exports = {
     var sig = new crypto.SignedXml()
     sig.keyInfoProvider = new crypto.FileKeyInfo("./test/static/client_public.pem")
     sig.loadSignature(signature);
-    var result = sig.checkSignature(xml);
+    var result = await sig.checkSignature(xml);
     test.equal(result, true);
     test.done();
   },
 
-  "add canonicalization if output of transforms will be a node-set rather than an octet stream": function(test) {
+  "add canonicalization if output of transforms will be a node-set rather than an octet stream": async function(test) {
 
     var xml = fs.readFileSync('./test/static/windows_store_signature.xml', 'utf-8');
 
@@ -80,13 +80,13 @@ module.exports = {
     var sig = new crypto.SignedXml();
     sig.keyInfoProvider = new crypto.FileKeyInfo("./test/static/windows_store_certificate.pem");
     sig.loadSignature(signature);
-    var result = sig.checkSignature(xml);
+    var result = await sig.checkSignature(xml);
     test.equal(result, true);
     test.done();
   },
 
 
-  "signature with inclusive namespaces": function(test) {    
+  "signature with inclusive namespaces": async function(test) {
 
     var xml = fs.readFileSync('./test/static/signature_with_inclusivenamespaces.xml', 'utf-8');        
     var doc = new Dom().parseFromString(xml);    
@@ -96,14 +96,14 @@ module.exports = {
     var sig = new crypto.SignedXml();    
     sig.keyInfoProvider = new crypto.FileKeyInfo("./test/static/signature_with_inclusivenamespaces.pem");
     sig.loadSignature(signature);    
-    var result = sig.checkSignature(xml);
+    var result = await sig.checkSignature(xml);
     test.equal(result, true);
     test.done();
   },
 
 
 
-  "signature with inclusive namespaces with unix line separators": function(test) {
+  "signature with inclusive namespaces with unix line separators": async function(test) {
 
     var xml = fs.readFileSync('./test/static/signature_with_inclusivenamespaces_lines.xml', 'utf-8');
     var doc = new Dom().parseFromString(xml);
@@ -113,14 +113,14 @@ module.exports = {
     var sig = new crypto.SignedXml();
     sig.keyInfoProvider = new crypto.FileKeyInfo("./test/static/signature_with_inclusivenamespaces.pem");
     sig.loadSignature(signature);
-    var result = sig.checkSignature(xml);
+    var result = await sig.checkSignature(xml);
     test.equal(result, true);
     test.done();
   },
 
 
 
-  "signature with inclusive namespaces with windows line separators": function(test) {
+  "signature with inclusive namespaces with windows line separators": async function(test) {
 
     var xml = fs.readFileSync('./test/static/signature_with_inclusivenamespaces_lines_windows.xml', 'utf-8');
     var doc = new Dom().parseFromString(xml);
@@ -130,7 +130,7 @@ module.exports = {
     var sig = new crypto.SignedXml();
     sig.keyInfoProvider = new crypto.FileKeyInfo("./test/static/signature_with_inclusivenamespaces.pem");
     sig.loadSignature(signature);
-    var result = sig.checkSignature(xml);
+    var result = await sig.checkSignature(xml);
     test.equal(result, true);
     test.done();
   },
@@ -138,7 +138,7 @@ module.exports = {
 
 
 
-  "should create single root xml document when signing inner node": function(test) {
+  "should create single root xml document when signing inner node": async function(test) {
     var xml = "<library>" +
                 "<book>" +
                   "<name>Harry Potter</name>" +
@@ -148,7 +148,7 @@ module.exports = {
     var sig = new SignedXml()
     sig.addReference("//*[local-name(.)='book']")    
     sig.signingKey = fs.readFileSync("./test/static/client.pem")
-    sig.computeSignature(xml)      
+    await sig.computeSignature(xml)
     
     var signed = sig.getSignedXml();
     console.log(signed);
@@ -185,7 +185,7 @@ module.exports = {
 
 }
 
-function verifySignature(test, xml, expected, xpath) {  
+async function verifySignature(test, xml, expected, xpath) {
   
   var sig = new SignedXml()
   sig.signingKey = fs.readFileSync("./test/static/client.pem")
@@ -193,7 +193,7 @@ function verifySignature(test, xml, expected, xpath) {
   
   xpath.map(function(n) { sig.addReference(n) })
 
-  sig.computeSignature(xml)
+  await sig.computeSignature(xml)
   var signed = sig.getSignedXml()
 
   //fs.writeFileSync("./test/validators/XmlCryptoUtilities/XmlCryptoUtilities/bin/Debug/signedExample.xml", signed)    
